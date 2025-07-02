@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <title>Situação COVID-19 por Estado</title>
+  <style>
+    body {
+      font-family: Verdana, sans-serif;
+      padding: 20px;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin-top: 20px;
+    }
+    th, td {
+      border: 1px solid #999;
+      padding: 8px;
+      text-align: center;
+    }
+    th {
+      background-color: #e0e0e0;
+    }
+    .destaque {
+      background-color: #ffe5e5;
+    }
+  </style>
+</head>
+<body>
+  <h2>Dados da COVID-19 - Estados Brasileiros</h2>
+
+  <table id="tabela-covid">
+    <thead>
+      <tr>
+        <th>Estado</th>
+        <th>UF</th>
+        <th>Casos</th>
+        <th>Suspeitos</th>
+        <th>Óbitos</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+    <tfoot>
+      <tr>
+        <th colspan="2">Médias</th>
+        <td id="media-casos"></td>
+        <td id="media-suspeitos"></td>
+        <td id="media-obitos"></td>
+      </tr>
+      <tr>
+        <td colspan="5" id="maior-relacao"></td>
+      </tr>
+      <tr>
+        <td colspan="5" id="menor-relacao"></td>
+      </tr>
+    </tfoot>
+  </table>
+
+  <script>
+    async function buscarDadosCovid() {
+      const resposta = await fetch("https://covid19-brazil-api.now.sh/api/report/v1");
+      const json = await resposta.json();
+      const lista = json.data;
+
+      const corpo = document.querySelector("#tabela-covid tbody");
+
+      let totalCasos = 0;
+      let totalSuspeitos = 0;
+      let totalObitos = 0;
+
+      let estadoMaior = null;
+      let estadoMenor = null;
+      let maiorRelacao = 0;
+      let menorRelacao = Infinity;
+
+      for (const item of lista) {
+        totalCasos += item.cases;
+        totalSuspeitos += item.suspects;
+        totalObitos += item.deaths;
+
+        const relacao = item.deaths > 0 ? item.cases / item.deaths : 0;
+
+        if (relacao > maiorRelacao) {
+          maiorRelacao = relacao;
+          estadoMaior = item.state;
+        }
+
+        if (item.deaths > 0 && relacao < menorRelacao) {
+          menorRelacao = relacao;
+          estadoMenor = item.state;
+        }
+
+        const linha = document.createElement("tr");
+        linha.innerHTML = `
+          <td>${item.state}</td>
+          <td>${item.uf}</td>
+          <td>${item.cases}</td>
+          <td>${item.suspects}</td>
+          <td>${item.deaths}</td>
+        `;
+        corpo.appendChild(linha);
+      }
+
+      const qtd = lista.length;
+      const mediaCasos = totalCasos / qtd;
+      const mediaSuspeitos = totalSuspeitos / qtd;
+      const mediaObitos = totalObitos / qtd;
+
+      document.getElementById("media-casos").textContent = mediaCasos.toFixed(2);
+      document.getElementById("media-suspeitos").textContent = mediaSuspeitos.toFixed(2);
+      document.getElementById("media-obitos").textContent = mediaObitos.toFixed(2);
+
+      for (const linha of corpo.rows) {
+        const mortes = parseInt(linha.cells[4].textContent);
+        if (mortes > mediaObitos) {
+          linha.classList.add("destaque");
+        }
+      }
+
+      document.getElementById("maior-relacao").textContent =
+        `Estado com maior relação Casos/Óbitos: ${estadoMaior} (${maiorRelacao.toFixed(2)})`;
+
+      document.getElementById("menor-relacao").textContent =
+        `Estado com menor relação Casos/Óbitos: ${estadoMenor} (${menorRelacao.toFixed(2)})`;
+    }
+
+    buscarDadosCovid();
+  </script>
+</body>
+</html>

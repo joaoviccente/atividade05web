@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <title>Situação Mundial da COVID-19</title>
+  <style>
+    body {
+      font-family: Verdana, sans-serif;
+      padding: 20px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    th, td {
+      border: 1px solid #aaa;
+      padding: 8px;
+      text-align: center;
+    }
+    th {
+      background-color: #eaeaea;
+    }
+    .destaque-brasil {
+      background-color: #ccffcc;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h2>Dados da COVID-19 por País</h2>
+
+  <table id="covid-paises">
+    <thead>
+      <tr>
+        <th>País</th>
+        <th>Casos</th>
+        <th>Óbitos</th>
+        <th>Recuperados</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    async function listarPaises() {
+      const resposta = await fetch("https://covid19-brazil-api.now.sh/api/report/v1/countries");
+      const resultado = await resposta.json();
+      const listaPaises = resultado.data;
+
+      const corpo = document.querySelector("#covid-paises tbody");
+
+      for (const pais of listaPaises) {
+        const linha = document.createElement("tr");
+        linha.innerHTML = `
+          <td>${pais.country}</td>
+          <td>${pais.cases}</td>
+          <td>${pais.deaths}</td>
+          <td>${pais.recovered}</td>
+        `;
+
+        if (pais.country.toLowerCase() === "brazil") {
+          linha.classList.add("destaque-brasil");
+        }
+
+        corpo.appendChild(linha);
+      }
+    }
+
+    listarPaises();
+  </script>
+</body>
+</html>
